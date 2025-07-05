@@ -135,7 +135,7 @@ def show_model_performance():
     st.header("Random Forest Model Performance")
 
     # Load saved components
-    model = joblib.load("../model/model_saved_file/logistic_model.pkl")
+    model = joblib.load("../model/model_saved_file/random_forest_model.pkl")
     scaler = joblib.load("../model/model_saved_file/scaler.pkl")
     le = joblib.load("../model/model_saved_file/label_encoder.pkl")
     X_test, y_test, y_pred, acc, cm, report_text = joblib.load("../model/model_saved_file/evaluation_results.pkl")
