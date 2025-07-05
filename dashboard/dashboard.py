@@ -3,8 +3,12 @@ import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
 import pickle
+import joblib
+import plotly.figure_factory as ff
+import numpy as np
 import plotly.express as px
 from streamlit_option_menu import option_menu
+from sklearn.metrics import classification_report
 
 # --- Load Dataset ---
 @st.cache_data
@@ -30,7 +34,7 @@ def show_attribute_distribution():
 
     df = load_data()
 
-    numeric_cols = ['Age', 'Height', 'Weight']
+    numeric_cols = ['Age', 'Height', 'Weight','BMI']
     categorical_cols = ['Gender', 'MonitorCaloriesHabit', 'GeneticsOverweight', 'SnackHabit','LevelObesity']
 
     # --- Numeric Charts (Top) ---
@@ -79,7 +83,7 @@ def show_obesity_distribution_by_attribute(df, attribute):
     st.info(f"✅ Group **`{dominant_group}`** in `{attribute}` shows highest obesity distribution.")
 
 def show_obesity_distribution_analysis():
-    st.subheader("Obesity Distribution by Factor")
+    st.subheader("Obesity Distribution by Attributes")
 
     df = load_data()
 
@@ -163,8 +167,8 @@ st.markdown("""
 
 # --- Main Content ---
 if selected == "Obesity Analysis":
-    st.title("📊 Obesity Analysis Dashboard")
-    tab1, tab2 = st.tabs(["Attributes Distribution", "Obesity Distribution by Factor"])
+    st.title("📊 Obesity Data Analysis Dashboard")
+    tab1, tab2 = st.tabs(["Attributes Distribution", "Obesity Distribution by Attributes"])
 
     with tab1:
         show_attribute_distribution()
