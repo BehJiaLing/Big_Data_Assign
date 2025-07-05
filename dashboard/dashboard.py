@@ -95,41 +95,56 @@ def show_obesity_distribution_analysis():
 
 
 # --- Page 2: Obesity Classification ---
-def show_tab2_prediction():
+# Load model and scaler
+model = joblib.load("../model/model_saved_file/random_forest_model.pkl")  # Rename if you prefer
+scaler = joblib.load("../model/model_saved_file/scaler.pkl")
+label_encoder = joblib.load("../model/model_saved_file/label_encoder.pkl")
+
+# Get original feature columns used in training (including dummy columns)
+training_columns = joblib.load("../model/model_saved_file/feature_columns.pkl")  # <-- we will create this
+
+def obesity_prediction():
     st.subheader("🤖 Predict Obesity Level")
 
     # Input form
     age = st.slider("Age", 10, 100, 25)
-    gender = st.selectbox("Gender", encoders['Gender'].classes_)
+    gender = st.selectbox("Gender", ['Male', 'Female'])
     height = st.number_input("Height (in meters)", 1.0, 2.5, 1.70)
     weight = st.number_input("Weight (in kg)", 30.0, 200.0, 70.0)
-    monitor = st.selectbox("Do you monitor your calorie intake?", encoders['MonitorCaloriesHabit'].classes_)
-    history = st.selectbox("Family history of overweight?", encoders['GeneticsOverweight'].classes_)
-    snack = st.selectbox("Snack habits", encoders['SnackHabit'].classes_)
+    monitor = st.selectbox("Do you monitor your calorie intake?", ['Yes', 'No'])
+    history = st.selectbox("Family history of overweight?", ['Yes', 'No'])
+    snack = st.selectbox("Snack habits", ['No', 'Sometimes', 'Frequently', 'Always'])
 
     if st.button("Predict Obesity Level"):
-        input_df = pd.DataFrame([[age, gender, height, weight, monitor, history, snack]],
-                                columns=['Age', 'Gender', 'Height', 'Weight', 'MonitorCaloriesHabit', 'GeneticsOverweight', 'SnackHabit'])
+        input_df = pd.DataFrame([{
+            'Age': age,
+            'Gender': gender,
+            'Height': height,
+            'Weight': weight,
+            'MonitorCaloriesHabit': monitor,
+            'GeneticsOverweight': history,
+            'SnackHabit': snack
+        }])
 
-        for col in ['Gender', 'MonitorCaloriesHabit', 'GeneticsOverweight', 'SnackHabit']:
-            input_df[col] = encoders[col].transform(input_df[col])
+        # One-hot encode like training
+        input_encoded = pd.get_dummies(input_df)
 
-        input_df[['Age', 'Height', 'Weight']] = scaler.transform(input_df[['Age', 'Height', 'Weight']])
-        prediction = model.predict(input_df)[0]
-        label = encoders['LevelObesity'].inverse_transform([prediction])[0]
+        # Ensure all columns match training
+        for col in training_columns:
+            if col not in input_encoded.columns:
+                input_encoded[col] = 0  # Add missing columns as 0
 
-        st.success(f"🎯 Predicted Obesity Level: *{label}*")
+        # Reorder columns to match training
+        input_encoded = input_encoded[training_columns]
 
-        suggestions = {
-            "Normal_Weight": "Maintain your healthy lifestyle!",
-            "Overweight_Level_I": "Consider regular physical activity and better eating habits.",
-            "Overweight_Level_II": "Consult a health professional for a personalized plan.",
-            "Obesity_Type_I": "Strongly consider medical advice and regular exercise.",
-            "Obesity_Type_II": "High risk. Please seek professional help.",
-            "Obesity_Type_III": "Severe risk. A medical intervention is highly recommended.",
-            "Insufficient_Weight": "Consider a balanced diet to reach healthy weight."
-        }
-        st.info("💡 Suggestion: " + suggestions.get(label, "Consult a health expert."))
+        # Scale numeric features
+        input_scaled = scaler.transform(input_encoded)
+
+        # Predict
+        pred = model.predict(input_scaled)[0]
+        label = label_encoder.inverse_transform([pred])[0]
+
+        st.success(f"🎯 Predicted Obesity Level: **{label}**")
 
 # --- Page 3: Model Performance ---
 def show_model_performance():
@@ -204,7 +219,7 @@ if selected == "Obesity Analysis":
 
 elif selected == "Obesity Classification":
     st.title("🤖 Obesity Classification")
-    show_tab2_prediction()
+    obesity_prediction()
 
 elif selected == "Model Performance":
     st.title("📈 Model Performance")
