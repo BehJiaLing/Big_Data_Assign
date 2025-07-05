@@ -63,5 +63,5 @@ print("\nFinal cleaned dataset preview:")
 print(df.head())
 
 # Save as cleaned file
-# df.to_csv("./data/ObesityDataSet_Cleaned.csv", index=False)
-# print("\n✅ Cleaned data saved to '../data/ObesityDataSet_Cleaned.csv'")
+df.to_csv("./data/ObesityDataSet_Cleaned.csv", index=False)
+print("\n✅ Cleaned data saved to '../data/ObesityDataSet_Cleaned.csv'")
