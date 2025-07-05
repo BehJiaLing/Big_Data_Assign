@@ -80,7 +80,7 @@ def show_obesity_distribution_by_attribute(df, attribute):
 
     # Highlight group with highest obesity distribution
     dominant_group = percentages.sum(axis=1).idxmax()
-    st.info(f"✅ Group **`{dominant_group}`** in `{attribute}` shows highest obesity distribution.")
+    st.info(f"✅ Group *{dominant_group}* in {attribute} shows highest obesity distribution.")
 
 def show_obesity_distribution_analysis():
     st.subheader("Obesity Distribution by Attributes")
@@ -117,7 +117,7 @@ def show_tab2_prediction():
         prediction = model.predict(input_df)[0]
         label = encoders['LevelObesity'].inverse_transform([prediction])[0]
 
-        st.success(f"🎯 Predicted Obesity Level: **{label}**")
+        st.success(f"🎯 Predicted Obesity Level: *{label}*")
 
         suggestions = {
             "Normal_Weight": "Maintain your healthy lifestyle!",
@@ -131,16 +131,41 @@ def show_tab2_prediction():
         st.info("💡 Suggestion: " + suggestions.get(label, "Consult a health expert."))
 
 # --- Page 3: Model Performance ---
-def show_tab3_performance():
-    st.subheader("📈 Model Performance (Example)")
-    st.markdown("""
-    - **Accuracy**: 85%
-    - **Precision**: ~82%
-    - **Recall**: ~84%
-    - **F1 Score**: ~83%
-    """)
-    st.image("https://scikit-learn.org/stable/_images/sphx_glr_plot_confusion_matrix_001.png", caption="Sample Confusion Matrix (illustrative)")
-    st.markdown("Model: **Logistic Regression** trained on cleaned structured dataset.")
+def show_model_performance():
+    st.header("Random Forest Model Performance")
+
+    # Load saved components
+    model = joblib.load("../model/model_saved_file/logistic_model.pkl")
+    scaler = joblib.load("../model/model_saved_file/scaler.pkl")
+    le = joblib.load("../model/model_saved_file/label_encoder.pkl")
+    X_test, y_test, y_pred, acc, cm, report_text = joblib.load("../model/model_saved_file/evaluation_results.pkl")
+
+    # Show Accuracy
+    st.metric("Model Accuracy", f"{acc:.2%}")
+
+    # Convert classification report to dataframe
+    report_dict = classification_report(
+        y_test, y_pred, target_names=le.classes_, output_dict=True
+    )
+    report_df = pd.DataFrame(report_dict).transpose()
+
+    # Show classification report as a table
+    st.subheader("Classification Report")
+    st.dataframe(report_df.round(2))
+
+    # Confusion Matrix
+    st.subheader("Confusion Matrix")
+    cm_labels = le.classes_
+    cm_fig = ff.create_annotated_heatmap(
+        z=cm.tolist(),
+        x=cm_labels.tolist(),
+        y=cm_labels.tolist(),
+        colorscale='Blues',
+        showscale=True,
+        annotation_text=cm.astype(str).tolist()
+    )
+    cm_fig.update_layout(xaxis_title="Predicted", yaxis_title="Actual")
+    st.plotly_chart(cm_fig, use_container_width=True)
 
 # --- Page Setting ---
 st.set_page_config(page_title="Obesity Dashboard", layout="wide")
@@ -182,5 +207,4 @@ elif selected == "Obesity Classification":
 
 elif selected == "Model Performance":
     st.title("📈 Model Performance")
-    show_tab3_performance()
-
+    show_model_performance()
