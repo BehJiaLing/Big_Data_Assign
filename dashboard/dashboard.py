@@ -95,27 +95,52 @@ def show_obesity_distribution_analysis():
 
 
 # --- Page 2: Obesity Classification ---
-# Load model and scaler
-model = joblib.load("../model/model_saved_file/random_forest_model.pkl")  # Rename if you prefer
+# Load model, scaler, label encoder, and training column names
+model = joblib.load("../model/model_saved_file/random_forest_model.pkl")
 scaler = joblib.load("../model/model_saved_file/scaler.pkl")
 label_encoder = joblib.load("../model/model_saved_file/label_encoder.pkl")
-
-# Get original feature columns used in training (including dummy columns)
-training_columns = joblib.load("../model/model_saved_file/feature_columns.pkl")  # <-- we will create this
+training_columns = joblib.load("../model/model_saved_file/feature_columns.pkl")
 
 def obesity_prediction():
-    st.subheader("🤖 Predict Obesity Level")
+    st.subheader("Predict Obesity Level")
 
-    # Input form
-    age = st.slider("Age", 10, 100, 25)
-    gender = st.selectbox("Gender", ['Male', 'Female'])
-    height = st.number_input("Height (in meters)", 1.0, 2.5, 1.70)
-    weight = st.number_input("Weight (in kg)", 30.0, 200.0, 70.0)
-    monitor = st.selectbox("Do you monitor your calorie intake?", ['Yes', 'No'])
-    history = st.selectbox("Family history of overweight?", ['Yes', 'No'])
-    snack = st.selectbox("Snack habits", ['No', 'Sometimes', 'Frequently', 'Always'])
+    # Initialize/reset session state
+    if "show_result" not in st.session_state:
+        st.session_state.show_result = False
+        st.session_state.bmi = None
+        st.session_state.label = None
 
-    if st.button("Predict Obesity Level"):
+    # --- Input Form with a border ---
+    with st.container():
+        st.markdown("""
+            <div style="border: 1px solid #ccc; padding: 20px; border-radius: 10px; background-color: #f9f9f9;">
+        """, unsafe_allow_html=True)
+
+        with st.form("prediction_form"):
+            st.markdown("#### 📝 Input Personal Details")
+
+            age = st.slider("Age", 10, 100, 25)
+            gender = st.selectbox("Gender", ['Male', 'Female'])
+            height = st.number_input("Height (in meters)", 1.0, 2.5, 1.70)
+            weight = st.number_input("Weight (in kg)", 30.0, 200.0, 70.0)
+            monitor = st.selectbox("Do you monitor your calorie intake?", ['yes', 'no'])
+            history = st.selectbox("Family history of overweight?", ['yes', 'no'])
+            snack = st.selectbox("Snack habits", ['no', 'sometimes', 'frequently', 'always'])
+
+            col1, col2 = st.columns([1, 1])
+            with col1:
+                predict = st.form_submit_button("🎯 Predict")
+            with col2:
+                clear = st.form_submit_button("🗑️ Clear")
+
+        st.markdown("</div>", unsafe_allow_html=True)
+
+    # --- Handle buttons ---
+    if predict:
+        bmi = weight / (height ** 2)
+        st.session_state.bmi = bmi
+
+        # Build input
         input_df = pd.DataFrame([{
             'Age': age,
             'Gender': gender,
@@ -125,26 +150,55 @@ def obesity_prediction():
             'GeneticsOverweight': history,
             'SnackHabit': snack
         }])
-
-        # One-hot encode like training
         input_encoded = pd.get_dummies(input_df)
-
-        # Ensure all columns match training
         for col in training_columns:
             if col not in input_encoded.columns:
-                input_encoded[col] = 0  # Add missing columns as 0
-
-        # Reorder columns to match training
+                input_encoded[col] = 0
         input_encoded = input_encoded[training_columns]
-
-        # Scale numeric features
         input_scaled = scaler.transform(input_encoded)
 
         # Predict
         pred = model.predict(input_scaled)[0]
         label = label_encoder.inverse_transform([pred])[0]
 
-        st.success(f"🎯 Predicted Obesity Level: **{label}**")
+        st.session_state.label = label
+        st.session_state.show_result = True
+
+    elif clear:
+        st.session_state.show_result = False
+        st.session_state.bmi = None
+        st.session_state.label = None
+
+    # --- Show result if available ---
+    if st.session_state.show_result:
+        st.subheader("Prediction Result")
+        st.markdown(f"📏 **Calculated BMI:** `{st.session_state.bmi:.2f}`")
+        st.success(f"🎯 **Predicted Obesity Level:** `{st.session_state.label}`")
+
+        suggestions = {
+            "Normal_Weight": "Maintain your healthy lifestyle! 👍",
+            "Overweight_Level_I": "Consider regular physical activity and better eating habits.",
+            "Overweight_Level_II": "Consult a health professional for a personalized plan.",
+            "Obesity_Type_I": "Strongly consider medical advice and regular exercise.",
+            "Obesity_Type_II": "High risk. Please seek professional help.",
+            "Obesity_Type_III": "Severe risk. A medical intervention is highly recommended.",
+            "Insufficient_Weight": "Consider a balanced diet to reach healthy weight."
+        }
+        st.info("💡 Suggestion: " + suggestions.get(st.session_state.label, "Consult a health expert."))
+
+        # --- Feature Importance Chart ---
+        st.subheader("Feature Importance (Top 10)")
+        importance_df = pd.DataFrame({
+            'Feature': training_columns,
+            'Importance': model.feature_importances_
+        }).sort_values(by='Importance', ascending=False).head(10)
+
+        fig = px.bar(importance_df, x='Importance', y='Feature',
+                     orientation='h', color='Importance',
+                     color_continuous_scale='Blues',
+                     title="Top 10 Feature Importances")
+        fig.update_layout(yaxis=dict(autorange="reversed"))
+        st.plotly_chart(fig, use_container_width=True)
 
 # --- Page 3: Model Performance ---
 def show_model_performance():
