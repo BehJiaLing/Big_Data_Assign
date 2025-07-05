@@ -98,6 +98,7 @@ def show_obesity_distribution_analysis():
 def show_tab2_prediction():
     st.subheader("🤖 Predict Obesity Level")
 
+    # Input form
     age = st.slider("Age", 10, 100, 25)
     gender = st.selectbox("Gender", encoders['Gender'].classes_)
     height = st.number_input("Height (in meters)", 1.0, 2.5, 1.70)
@@ -141,7 +142,7 @@ def show_model_performance():
     X_test, y_test, y_pred, acc, cm, report_text = joblib.load("../model/model_saved_file/evaluation_results.pkl")
 
     # Show Accuracy
-    st.metric("Model Accuracy", f"{acc:.2%}")
+    st.metric("Model Accuracy:", f"{acc:.2%}")
 
     # Convert classification report to dataframe
     report_dict = classification_report(
