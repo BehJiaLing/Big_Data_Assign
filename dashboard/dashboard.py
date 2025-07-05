@@ -10,10 +10,6 @@ from streamlit_option_menu import option_menu
 @st.cache_data
 def load_data():
     df = pd.read_csv('../data/ObesityDataSet_Cleaned.csv')
-    # Create AgeGroup column
-    bins = [0, 20, 30, 40, 50, 100]
-    labels = ['<20', '21–30', '31–40', '41–50', '50+']
-    df['AgeGroup'] = pd.cut(df['Age'], bins=bins, labels=labels, right=False)
     return df
 
 # --- Load Model ---
@@ -86,11 +82,6 @@ def show_obesity_distribution_analysis():
     st.subheader("Obesity Distribution by Factor")
 
     df = load_data()
-
-    # Create AgeGroup column
-    bins = [0, 20, 30, 40, 50, 100]
-    labels = ['<20', '21–30', '31–40', '41–50', '50+']
-    df['AgeGroup'] = pd.cut(df['Age'], bins=bins, labels=labels, right=False)
 
     categorical_cols = ['Gender', 'MonitorCaloriesHabit', 'GeneticsOverweight', 'SnackHabit', 'AgeGroup']
 
