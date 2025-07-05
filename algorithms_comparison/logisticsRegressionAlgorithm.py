@@ -34,6 +34,7 @@ model.fit(X_train, y_train)
 y_pred = model.predict(X_test)
 
 # 9. Evaluate the model
-print("Accuracy:", accuracy_score(y_test, y_pred))
+acc = accuracy_score(y_test, y_pred)
+print(f"Accuracy: {acc:.2%}")
 print("\nConfusion Matrix:\n", confusion_matrix(y_test, y_pred))
 print("\nClassification Report:\n", classification_report(y_test, y_pred, target_names=le.classes_))
