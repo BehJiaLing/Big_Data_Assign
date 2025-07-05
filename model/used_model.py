@@ -42,5 +42,7 @@ joblib.dump(model, "./model/model_saved_file/logistic_model.pkl")
 joblib.dump(scaler, "./model/model_saved_file/scaler.pkl")
 joblib.dump(le, "./model/model_saved_file/label_encoder.pkl")
 joblib.dump((X_test_scaled, y_test, y_pred, acc, cm, report), "./model/model_saved_file/evaluation_results.pkl")
+joblib.dump(X.columns.tolist(), "./model/model_saved_file/feature_columns.pkl") # Save training columns after one-hot encoding
+
 
 print("✅ Model, scaler, and evaluation saved.")
